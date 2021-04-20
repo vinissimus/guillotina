@@ -4,7 +4,10 @@ CHANGELOG
 6.3.16 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Port the following changes:
+  - Remove db transaction strategy support
+  - Try not to reserve connection when possible
+    [vangheem]
 
 
 6.3.15 (2021-08-05)
