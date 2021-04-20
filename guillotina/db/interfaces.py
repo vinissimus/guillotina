@@ -58,8 +58,7 @@ class ITransaction(Interface):
         """
 
     async def tpc_begin():
-        """
-        """
+        """"""
 
     async def get(oid: str) -> typing.Optional[IBaseObject]:
         """
@@ -353,10 +352,6 @@ class ITransactionStrategy(Interface):
         """
 
 
-class IDBTransactionStrategy(ITransactionStrategy):
-    pass
-
-
 class IDatabaseManager(Interface):
     async def get_names() -> list:  # type: ignore
         """
@@ -385,8 +380,7 @@ class IDatabaseManager(Interface):
 
 
 class IJSONDBSerializer(ICatalogDataAdapter):
-    """
-    """
+    """"""
 
 
 class IVacuumProvider(Interface):

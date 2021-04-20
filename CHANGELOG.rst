@@ -4,7 +4,10 @@ CHANGELOG
 6.4.0rc1 (unreleased)
 ---------------------
 
-- Nothing changed yet.
+- Port the following changes:
+  - Remove db transaction strategy support
+  - Try not to reserve connection when possible
+    [vangheem]
 
 
 6.4.0rc0 (2021-10-20)
