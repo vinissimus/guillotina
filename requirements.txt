@@ -4,7 +4,7 @@ cffi==1.12.2
 chardet==3.0.4
 jsonschema==2.6.0
 multidict==4.5.2
-pycparser==2.18
+pycparser==2.20
 pycryptodome==3.6.6
 PyJWT==1.6.0
 python-dateutil==2.6.1
