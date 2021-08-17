@@ -23,11 +23,10 @@ jobs:
 
       - name: Install package
         run: |
-          pip install $(grep -P 'flake8|mypy|black|isort' contrib-requirements.txt)
+          pip install $(grep -P 'flake8|black|isort' contrib-requirements.txt)
       - name: Run pre-checks
         run: |
           flake8 guillotina --config=setup.cfg
-          mypy guillotina/
           isort -c -rc guillotina/
           black --check --verbose guillotina
   # Job to run tests
@@ -71,6 +70,10 @@ jobs:
 
       - name: Start memcached image
         uses: niden/actions-memcached@v7
+
+      - name: Check mypy
+        run: |
+          mypy guillotina/
 
       - name: Run tests
         run: |
