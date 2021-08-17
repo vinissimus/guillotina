@@ -1,4 +1,4 @@
-Cython==0.29.13
+Cython==0.29.24
 asyncpg==0.21.0
 cffi==1.12.2
 chardet==3.0.4
