@@ -17,3 +17,12 @@ argon2-cffi==18.3.0
 backoff==1.10.0
 prometheus-client==0.8.0
 typing_extensions==3.7.4.3
+
+types-PyYAML
+types-chardet
+types-docutils
+types-orjson
+types-python-dateutil
+types-pytz
+types-setuptools
+types-toml

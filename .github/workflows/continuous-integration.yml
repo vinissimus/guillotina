@@ -27,7 +27,7 @@ jobs:
       - name: Run pre-checks
         run: |
           flake8 guillotina --config=setup.cfg
-          mypy guillotina/ --ignore-missing-imports
+          mypy guillotina/
           isort -c -rc guillotina/
           black --check --verbose guillotina
   # Job to run tests
