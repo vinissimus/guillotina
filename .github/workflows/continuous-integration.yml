@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, 3.10.0-rc.1]
+        #  3.7, 3.8,
+        python-version: [ 3.9, 3.10.0-rc.1]
 
     steps:
       - name: Checkout the repository
@@ -22,11 +23,7 @@ jobs:
 
       - name: Install package
         run: |
-          pip install flake8==3.7.7
-          pip install mypy==0.720
-          pip install mypy-zope==0.2.0
-          pip install black==19.10b0
-          pip install isort==4.3.21
+          pip install $(grep -P 'flake8|mypy|black|isort' contrib-requirements.txt)
       - name: Run pre-checks
         run: |
           flake8 guillotina --config=setup.cfg
@@ -39,7 +36,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, 3.10.0-rc.1]
+        # 3.7, 3.8,
+        python-version: [3.9, 3.10.0-rc.1]
         database: ["DUMMY", "postgres", "cockroachdb"]
         db_schema: ["custom", "public"]
         exclude:
