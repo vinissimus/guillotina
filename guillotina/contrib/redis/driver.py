@@ -7,7 +7,6 @@ except ImportError:
 from guillotina import app_settings
 from guillotina import metrics
 from guillotina.contrib.redis.exceptions import NoRedisConfigured
-from typing import Any
 from typing import List
 from typing import Optional
 
