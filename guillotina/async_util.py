@@ -31,7 +31,7 @@ class QueueUtility(object):
     @property
     def queue(self):
         if self._queue is None:
-            self._queue = asyncio.Queue(loop=self._loop)
+            self._queue = asyncio.Queue()
         return self._queue
 
     async def initialize(self, app=None):

@@ -26,7 +26,6 @@ import aiohttp
 import asyncio
 import json
 import os
-import prometheus_client.registry
 import pytest
 
 
@@ -651,6 +650,8 @@ async def dbusers_requester(guillotina):
 
 @pytest.fixture(scope="function")
 async def metrics_registry():
+    import prometheus_client.registry
+
     for collector in prometheus_client.registry.REGISTRY._names_to_collectors.values():
         if not hasattr(collector, "_metrics"):
             continue
