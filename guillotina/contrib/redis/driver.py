@@ -4,16 +4,17 @@ except ImportError:
     print("If you add guillotina.contrib.redis you need to add aioredis on your requirements")
     raise
 
+from aioredis.client import PubSub
 from guillotina import app_settings
 from guillotina import metrics
 from guillotina.contrib.redis.exceptions import NoRedisConfigured
+from typing import Dict
 from typing import List
 from typing import Optional
 
 import asyncio
 import backoff
 import logging
-import weakref
 
 
 try:
@@ -71,11 +72,9 @@ class RedisDriver:
     @backoff.on_exception(backoff.expo, (OSError,), max_time=30, max_tries=4)
     async def _connect(self):
         settings = app_settings["redis"]
-        self._conn_pool = aioredis.ConnectionPool.from_url(
-            f"redis://{settings['host']}:{settings['port']}", decode_responses=True
-        )
+        self._conn_pool = aioredis.ConnectionPool.from_url(f"redis://{settings['host']}:{settings['port']}")
         self._pool = aioredis.Redis(connection_pool=self._conn_pool)
-        self._pubsub_channels = weakref.WeakValueDictionary()
+        self._pubsub_channels: Dict[str, PubSub] = {}
 
     async def finalize(self):
         await self._conn_pool.disconnect()
@@ -86,7 +85,7 @@ class RedisDriver:
         return self._pool
 
     async def info(self):
-        return await self._pool.execute_command(b"INFO", "get")
+        return await self._pool.info("get")
 
     # VALUE API
 
@@ -148,31 +147,33 @@ class RedisDriver:
         if self._pool is None:
             raise NoRedisConfigured()
 
-        p = self._pubsub_channels[channel_name]
         with watch("publish"):
-            await p.publish(channel_name, data)
+            await self._pool.publish(channel_name, data)
 
     async def unsubscribe(self, channel_name: str):
         if self._pool is None:
             raise NoRedisConfigured()
 
         p = self._pubsub_channels[channel_name]
-        await p.unsububscribe(channel_name)
+        try:
+            await p.unsubscribe(channel_name)
+        finally:
+            await p.__aexit__(None, None, None)
+            del self._pubsub_channels[channel_name]
 
     async def subscribe(self, channel_name: str):
         if self._pool is None:
             raise NoRedisConfigured()
 
-        async with self._pool.pubsub() as p:
-            self._pubsub_channels[channel_name] = p
-            await p.subscribe(channel_name)
-            while True:
-                message = await self._get_messages_blocking(p)
+        p: PubSub = await self._pool.pubsub().__aenter__()
+        self._pubsub_channels[channel_name] = p
+        await p.subscribe(channel_name)
+        return self._listener(p)
+
+    async def _listener(self, p):
+        while True:
+            response = await p.parse_response(block=True, timeout=1.0)
+            if response:
+                message = p.handle_message(response, ignore_subscribe_messages=True)
                 if message is not None:
                     yield message["data"]
-
-    async def _get_messages_blocking(self, p):
-        response = await p.parse_response(block=True, timeout=1.0)
-        if response:
-            return p.handle_message(response, True)
-        return None

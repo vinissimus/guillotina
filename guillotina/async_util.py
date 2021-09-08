@@ -1,4 +1,3 @@
-from dateutil.tz import tzutc
 from guillotina import logger
 from guillotina import task_vars
 from guillotina.db.transaction import Status
@@ -16,9 +15,6 @@ from guillotina.utils import load_task_vars
 
 import asyncio
 import typing
-
-
-_zone = tzutc()
 
 
 class QueueUtility(object):

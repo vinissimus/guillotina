@@ -34,6 +34,7 @@ import asyncio
 import logging
 import sys
 import time
+import warnings
 
 
 _EMPTY = "__<EMPTY VALUE>__"
@@ -144,8 +145,11 @@ class Transaction:
     user = None
 
     def __init__(
-        self, manager, read_only: bool = False, cache=None, strategy=None,
+        self, manager, loop=None, read_only: bool = False, cache=None, strategy=None,
     ):
+        if loop is not None:
+            warnings.warn("Argument 'loop' is deprecated and ignored", DeprecationWarning)
+
         # Transaction Manager
         self._manager = manager
 
