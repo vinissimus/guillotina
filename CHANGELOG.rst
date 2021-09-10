@@ -6,6 +6,8 @@ CHANGELOG
 
 - Add support for Python 3.10
   [masipcat]
+- Reimplemented IRedisUtility to adapt to aioredis v2.0 breaking changes
+  [masipcat]
 - Upgraded dev dependencies
   [masipcat]
 

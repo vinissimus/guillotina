@@ -9,8 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        #  3.7, 3.8,
-        python-version: [ 3.9, 3.10.0-rc.1]
+        python-version: [3.7, 3.8, 3.9, 3.10.0-rc.1]
 
     steps:
       - name: Checkout the repository
@@ -35,8 +34,7 @@ jobs:
 
     strategy:
       matrix:
-        # 3.7, 3.8,
-        python-version: [3.9, 3.10.0-rc.1]
+        python-version: [3.7, 3.8, 3.9, 3.10.0-rc.1]
         database: ["DUMMY", "postgres", "cockroachdb"]
         db_schema: ["custom", "public"]
         exclude:
@@ -77,8 +75,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -rfE --reruns 2 --cov=guillotina -s --tb=native -v --cov-report xml --cov-append guillotina \
-            --ignore=guillotina/tests/image --ignore=guillotina/tests/memcached  # TEMPORARY!!!
+          pytest -rfE --reruns 2 --cov=guillotina -s --tb=native -v --cov-report xml --cov-append guillotina
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
