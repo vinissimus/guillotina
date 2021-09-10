@@ -10,6 +10,7 @@ CHANGELOG
   [masipcat]
 - Upgraded dev dependencies
   [masipcat]
+- Fix vocabulray country code AN
 
 6.3.15 (2021-08-05)
 -------------------
