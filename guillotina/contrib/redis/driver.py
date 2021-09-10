@@ -85,6 +85,8 @@ class RedisDriver:
         return self._pool
 
     async def info(self):
+        if self._pool is None:
+            raise NoRedisConfigured()
         return await self._pool.info("get")
 
     # VALUE API
@@ -97,7 +99,7 @@ class RedisDriver:
             kwargs["ex"] = expire
         with watch("set"):
             ok = await self._pool.set(key, data, **kwargs)
-        assert ok == b"OK", ok
+        assert ok is True, ok
 
     async def get(self, key: str) -> str:
         if self._pool is None:
@@ -135,7 +137,7 @@ class RedisDriver:
             except Exception:
                 logger.warning("Error deleting cache keys {}".format(keys), exc_info=True)
 
-    async def flushall(self, *, async_op: Optional[bool] = False):
+    async def flushall(self, *, async_op: bool = False):
         if self._pool is None:
             raise NoRedisConfigured()
         with watch("flush"):
@@ -170,10 +172,8 @@ class RedisDriver:
         await p.subscribe(channel_name)
         return self._listener(p)
 
-    async def _listener(self, p):
+    async def _listener(self, p: PubSub):
         while True:
-            response = await p.parse_response(block=True, timeout=1.0)
-            if response:
-                message = p.handle_message(response, ignore_subscribe_messages=True)
-                if message is not None:
-                    yield message["data"]
+            message = await p.get_message(ignore_subscribe_messages=True, timeout=0.1)
+            if message is not None:
+                yield message["data"]
