@@ -1,7 +1,7 @@
 try:
     from guillotina.contrib.memcached.driver import MemcachedDriver
 except ImportError:
-    MemcachedDriver = None
+    MemcachedDriver = None  # type: ignore
 from guillotina.component import get_utility
 from guillotina.interfaces import ICacheUtility
 

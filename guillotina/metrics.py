@@ -1,6 +1,6 @@
 from typing import Dict
 from typing import Optional
-from typing import TypeVar
+from typing import Type
 
 import asyncio
 import time
@@ -16,9 +16,6 @@ except ImportError:
 ERROR_NONE = "none"
 ERROR_GENERAL_EXCEPTION = "exception"
 
-# Like Type[Exception] but allows subclasses of Exception
-TypeException = TypeVar("TypeException", bound=Exception)
-
 
 class watch:
     start: float
@@ -28,7 +25,7 @@ class watch:
         *,
         counter: Optional[Counter] = None,
         histogram: Optional[Histogram] = None,
-        error_mappings: Dict[str, TypeException] = None,
+        error_mappings: Dict[str, Type[BaseException]] = None,
         labels: Optional[Dict[str, str]] = None,
     ):
         self.counter = counter
@@ -42,7 +39,7 @@ class watch:
 
     def __exit__(
         self,
-        exc_type: Optional[TypeException],
+        exc_type: Optional[Type[BaseException]],
         exc_value: Optional[Exception],
         exc_traceback: Optional[traceback.StackSummary],
     ):

@@ -1,7 +1,7 @@
 try:
     from guillotina.contrib.memcached.driver import MemcachedDriver
 except ModuleNotFoundError:
-    MemcachedDriver = None
+    MemcachedDriver = None  # type: ignore
 
 from asyncmock import AsyncMock
 
