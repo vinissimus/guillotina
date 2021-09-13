@@ -389,7 +389,6 @@ async def dummy_guillotina(event_loop, request):
     task_vars._no_task_fallback = task_vars.FakeTask()
     app = make_app(settings=get_dummy_settings(request.node), loop=event_loop)
     async with TestClient(app):
-        copy_global_ctx()
         yield app
     logout()
     clear_task_vars()
@@ -401,13 +400,13 @@ class DummyRequestAsyncContextManager(object):
         self.loop = loop
 
     async def __aenter__(self):
-        task = asyncio.Task.current_task(loop=self.loop)
+        task = asyncio.current_task(loop=self.loop)
         if task is not None:
             task.request = self.request
         return self.request
 
     async def __aexit__(self, exc_type, exc, tb):
-        task = asyncio.Task.current_task(loop=self.loop)
+        task = asyncio.current_task(loop=self.loop)
         del task.request
 
 

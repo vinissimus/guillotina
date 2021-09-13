@@ -174,6 +174,6 @@ class RedisDriver:
 
     async def _listener(self, p: PubSub):
         while True:
-            message = await p.get_message(ignore_subscribe_messages=True, timeout=0.1)
+            message = await p.get_message(ignore_subscribe_messages=True, timeout=1)
             if message is not None:
                 yield message["data"]
