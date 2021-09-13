@@ -10,6 +10,8 @@ CHANGELOG
   [masipcat]
 - Upgraded dev dependencies
   [masipcat]
+- Use custom implementation of ContextVar that is not copied automatically to new tasks
+  [masipcat]
 - Fix vocabulray country code AN
 
 6.3.15 (2021-08-05)
