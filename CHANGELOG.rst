@@ -1,11 +1,35 @@
 CHANGELOG
 =========
 
-6.3.13 (unreleased)
+6.3.16 (unreleased)
 -------------------
 
 - Use custom implementation of ContextVar that is not copied automatically to new tasks
   [masipcat]
+
+- Fix vocabulray country code AN
+
+
+6.3.15 (2021-08-05)
+-------------------
+
+- fix: Add MIMEMultipart('alternative') to attach message in parent MIMEMultipart to render only html body. 
+  [rboixaderg]
+
+6.3.14 (2021-08-04)
+-------------------
+
+- feat: Change MIMEMultipart 'alternative' to 'mixed'. Outlook and Thunderbird not recieve attachment when use 'alternative'
+- chore: fix version aioredis 1.3.1
+  [rboixaderg]
+
+
+6.3.13 (2021-07-05)
+-------------------
+
+- Mask Textline field to recover masked values on get
+  [bloodbare]
+
 - Fix navigate_to() crashes with 'AttributeError' when traversing to a non-folderish object
   [masipcat]
 
