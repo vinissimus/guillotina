@@ -96,7 +96,7 @@ class PubSubUtility:
             self._subscribers[channel_name] = {rid: callback}
             # Moved the subscribe command outside the future to ensure we are subscribed after returning
             channel = await self._driver.subscribe(channel_name)
-            self._tasks[channel_name] = asyncio.ensure_future(copy_context(self.real_subscribe(channel, channel_name)))
+            self._tasks[channel_name] = asyncio.ensure_future(self.real_subscribe(channel, channel_name))
 
     async def unsubscribe(self, channel_name: str, req_id: str):
         if self._driver is None:
