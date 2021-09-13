@@ -1,6 +1,5 @@
 from guillotina.contrib.pubsub.exceptions import NoPubSubDriver
 from guillotina.profile import profilable
-from guillotina.task_vars import copy_context
 from guillotina.utils import resolve_dotted_name
 from typing import Any
 from typing import Callable
