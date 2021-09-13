@@ -3,6 +3,8 @@ CHANGELOG
 
 6.3.16 (unreleased)
 -------------------
+- Use custom implementation of ContextVar that is not copied automatically to new tasks
+  [masipcat]
 
 - Use custom implementation of Transaction/TransacionManager to support real SQL transactions
   [masipcat]
@@ -16,7 +18,7 @@ CHANGELOG
 6.3.15 (2021-08-05)
 -------------------
 
-- fix: Add MIMEMultipart('alternative') to attach message in parent MIMEMultipart to render only html body. 
+- fix: Add MIMEMultipart('alternative') to attach message in parent MIMEMultipart to render only html body.
   [rboixaderg]
 
 6.3.14 (2021-08-04)

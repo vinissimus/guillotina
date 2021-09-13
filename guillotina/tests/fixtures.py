@@ -13,6 +13,7 @@ from guillotina.interfaces import IApplication
 from guillotina.interfaces import IDatabase
 from guillotina.tests import mocks
 from guillotina.tests.utils import ContainerRequesterAsyncContextManager
+from guillotina.tests.utils import copy_global_ctx
 from guillotina.tests.utils import get_mocked_request
 from guillotina.tests.utils import login
 from guillotina.tests.utils import logout
@@ -386,6 +387,7 @@ def clear_task_vars():
 @pytest.fixture(scope="function")
 async def dummy_guillotina(event_loop, request):
     globalregistry.reset()
+    task_vars._no_task_fallback = task_vars.FakeTask()
     app = make_app(settings=get_dummy_settings(request.node), loop=event_loop)
     async with TestClient(app):
         yield app
@@ -429,6 +431,10 @@ class RootAsyncContextManager:
         self.txn = None
 
     async def __aenter__(self):
+        # This is a hack to copy contextvars defined in fixture dummy_request
+        # (oustide event loop) to this asyncio task
+        copy_global_ctx()
+
         tm = get_tm()
         self.txn = await tm.begin()
         self.root = await tm.get_root()
@@ -484,6 +490,7 @@ SELECT 'DROP INDEX ' || string_agg(indexrelid::regclass::text, ', ')
 @pytest.fixture(scope="function")
 async def app(event_loop, db, request):
     globalregistry.reset()
+    task_vars._no_task_fallback = task_vars.FakeTask()
     settings = get_db_settings(request.node)
     app = make_app(settings=settings, loop=event_loop)
 
@@ -516,6 +523,7 @@ async def app(event_loop, db, request):
 @pytest.fixture(scope="function")
 async def app_client(event_loop, db, request):
     globalregistry.reset()
+    task_vars._no_task_fallback = task_vars.FakeTask()
     app = make_app(settings=get_db_settings(request.node), loop=event_loop)
     async with TestClient(app, timeout=30) as client:
         await _clear_dbs(app.app.root)
