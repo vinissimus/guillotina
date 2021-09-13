@@ -4,6 +4,9 @@ CHANGELOG
 6.3.16 (unreleased)
 -------------------
 
+- Use custom implementation of ContextVar that is not copied automatically to new tasks
+  [masipcat]
+
 - Fix vocabulray country code AN
 
 
