@@ -4,6 +4,9 @@ CHANGELOG
 6.4.0 (unreleased)
 -------------------
 
+- Use custom implementation of ContextVar that is not copied automatically to new tasks
+  [masipcat]
+
 - Add support for Python 3.10
   [masipcat]
 - Reimplemented IRedisUtility to adapt to aioredis v2.0 breaking changes
@@ -11,7 +14,6 @@ CHANGELOG
 - Removed argument 'loop' from utilities initialization (following Python 3.10 changes)
   [masipcat]
 - Upgraded dev dependencies
-  [masipcat]
 
 - Fix searching by SearchableText
   [frapell]
