@@ -94,7 +94,9 @@ async def traverse(
         tm = context.get_transaction_manager()
         task_vars.tm.set(tm)
         # Start a transaction
-        txn = await tm.begin(read_only=not app_settings["check_writable_request"](request))
+        # We still don't know if the service is writable or not, so we do a lazy init
+        # and we'll start the real transaction once the service is loaded
+        txn = await tm.begin(read_only=not app_settings["check_writable_request"](request), lazy=True)
         # Get the root of the tree
         context = await tm.get_root(txn=txn)
 
