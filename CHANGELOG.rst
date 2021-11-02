@@ -4,6 +4,9 @@ CHANGELOG
 6.3.16 (unreleased)
 -------------------
 
+- Use custom implementation of Transaction/TransacionManager to support real SQL transactions
+  [masipcat]
+
 - Port the following changes:
   - Remove db transaction strategy support
   - Try not to reserve connection when possible
