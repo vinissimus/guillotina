@@ -64,7 +64,7 @@ class TransactionManager:
         return await txn.get(ROOT_ID)
 
     @profilable
-    async def begin(self, read_only: bool = False) -> ITransaction:
+    async def begin(self, read_only: bool = False, lazy: bool = False) -> ITransaction:
         """Starts a new transaction."""
         # already has txn registered, as long as connection is closed, it
         # is safe
@@ -94,6 +94,10 @@ class TransactionManager:
 
         # make sure to explicitly set!
         task_vars.txn.set(txn)
+
+        if lazy is False and read_only is False and txn._db_txn is None:
+            # We want real postgres transactions so we force the SQL BEGIN
+            await self.storage.start_transaction(txn)
 
         return txn
 
