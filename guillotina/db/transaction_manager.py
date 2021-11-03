@@ -66,24 +66,7 @@ class TransactionManager:
     async def begin(self, read_only: bool = False, lazy: bool = False) -> ITransaction:
         """Starts a new transaction.
         """
-        # already has txn registered, as long as connection is closed, it
-        # is safe
-        txn: typing.Optional[ITransaction] = task_vars.txn.get()
-        if (
-            txn is not None
-            and txn.manager == self
-            and txn.storage == self.storage
-            and txn.status in (Status.ABORTED, Status.COMMITTED, Status.CONFLICT)
-        ):
-            # re-use txn if possible
-            txn.initialize(read_only)
-            if txn._db_conn is not None and getattr(txn._db_conn, "_in_use", None) is None:
-                try:
-                    await self._close_txn(txn)
-                except Exception:
-                    logger.warn("Unable to close spurious connection", exc_info=True)
-        else:
-            txn = Transaction(self, read_only=read_only)
+        txn = Transaction(self, read_only=read_only)
 
         try:
             txn.user = get_authenticated_user_id()
