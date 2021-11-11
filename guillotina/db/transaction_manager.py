@@ -76,18 +76,18 @@ class TransactionManager:
             and txn.storage == self.storage
             and txn.status in (Status.ABORTED, Status.COMMITTED, Status.CONFLICT)
         ):
-            logger.info(f"Reusing txn: {txn}")
+            logger.info(f"[{txn}] Reusing txn")
             # re-use txn if possible
             txn.initialize(read_only)
             if txn._db_conn is not None and getattr(txn._db_conn, "_in_use", None) is None:
-                logger.info(f"Closing conn: {txn}, {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})")
+                logger.info(f"[{txn}] Closing conn: {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})")
                 try:
                     await self._close_txn(txn)
                 except Exception:
-                    logger.warn("Unable to close spurious connection", exc_info=True)
+                    logger.warn(f"[{txn}] Unable to close spurious connection", exc_info=True)
         else:
             txn = Transaction(self, read_only=read_only)
-            logger.info(f"Initializing new txn: {txn}")
+            logger.info(f"[{txn}] Initializing new txn")
 
         try:
             txn.user = get_authenticated_user_id()
@@ -126,6 +126,7 @@ class TransactionManager:
             await self._close_txn(txn)
 
     async def _close_txn(self, txn: typing.Optional[ITransaction]):
+        logger.info(f"[{txn}] Close txn's connection {txn._db_conn}")
         if txn is not None and txn._db_conn is not None:
             try:
                 txn._query_count_end = txn.get_query_count()
@@ -133,6 +134,7 @@ class TransactionManager:
                 pass
             try:
                 try:
+                    logger.info(f"[{txn}] Storage close connection {txn._db_conn}")
                     await self._storage.close(txn._db_conn)
                 except asyncpg.exceptions.InterfaceError as ex:
                     if "received invalid connection" in str(ex):
@@ -145,18 +147,23 @@ class TransactionManager:
                     if txn._db_conn is not None:
                         raise
             except Exception:
+                logger.exception(f"[{txn}] Exception: {txn._db_conn}, {getattr(txn._db_conn, '_con', None)}")
                 # failsafe terminate to make sure connection is cleaned
                 if txn._db_conn is None:
                     raise
                 if txn._db_conn._con is None:
                     raise
+
                 try:
                     await self._storage.terminate(txn._db_conn)
                 except asyncpg.exceptions.InterfaceError as ex:
+                    logger.exception(f"[{txn}] InterfaceError: {txn._db_conn}")
                     if "released back to the pool" in str(ex):
                         pass
                     else:
                         raise
+
+            logger.info(f"[{txn}] Set db connection to None ({txn._db_conn})")
             txn._db_conn = None
 
     async def abort(self, *, txn: typing.Optional[ITransaction] = None) -> None:
