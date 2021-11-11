@@ -76,18 +76,18 @@ class TransactionManager:
             and txn.storage == self.storage
             and txn.status in (Status.ABORTED, Status.COMMITTED, Status.CONFLICT)
         ):
-            logger.info(f"Reusing txn: {txn} ({id(txn)})")
+            logger.info(f"Reusing txn: {txn}")
             # re-use txn if possible
             txn.initialize(read_only)
             if txn._db_conn is not None and getattr(txn._db_conn, "_in_use", None) is None:
-                logger.info(f"Txn: {txn} ({id(txn)}), {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})")
+                logger.info(f"Closing conn: {txn}, {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})")
                 try:
                     await self._close_txn(txn)
                 except Exception:
                     logger.warn("Unable to close spurious connection", exc_info=True)
         else:
             txn = Transaction(self, read_only=read_only)
-            logger.info(f"Initializing new txn: {txn} ({id(txn)})")
+            logger.info(f"Initializing new txn: {txn}")
 
         try:
             txn.user = get_authenticated_user_id()
