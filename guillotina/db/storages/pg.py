@@ -586,19 +586,30 @@ class TransactionConnectionContextManager:
     from pool
     """
 
-    def __init__(self, storage, txn):
+    def __init__(self, storage, txn, op):
         self.storage = storage
         self.txn = txn
         self.connection = None
+        self.op = op
+        self.watch_lock = None
 
     async def __aenter__(self):
         if self.txn.connection_reserved:
+            log.info(f"[{self.txn}] Before lock acquire ({self.op})")
+            self._watch_lock = watch_lock(self.txn._lock, self.op)
+            await self._watch_lock.__aenter__()
+            log.info(f"[{self.txn}] After lock acquire ({self.op})")
             return self.txn._db_conn
-        self.connection = await self.storage.pool.acquire(timeout=self.storage._conn_acquire_timeout)
-        return self.connection
+        else:
+            self.connection = await self.storage.pool.acquire(timeout=self.storage._conn_acquire_timeout)
+            return self.connection
 
     async def __aexit__(self, *exc):
-        if self.connection is not None:
+        if self.txn.connection_reserved:
+            await self._watch_lock.__aexit__(*exc)
+            self._watch_lock = None
+            log.info(f"[{self.txn}] After lock release ({self.op})")
+        elif self.connection is not None:
             await self.storage.pool.release(self.connection)
 
 
@@ -856,9 +867,8 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
 
     async def load(self, txn, oid):
         sql = self._sql.get("GET_OID", self.objects_table_name)
-        async with watch_lock(txn._lock, "load_object_by_oid"):
-            with watch("load_object_by_oid"):
-                objects = await self.get_one_row(txn, sql, oid)
+        with watch("load_object_by_oid"):
+            objects = await self.get_one_row(txn, sql, oid)
         if objects is None:
             raise KeyError(oid)
         return objects
@@ -886,7 +896,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
             statement_sql = self._sql.get("UPDATE", self.objects_table_name)
             update = True
 
-        async with watch_lock(txn._lock, "store_object"), self.acquire(txn) as conn:
+        async with self.acquire(txn, "store_object") as conn:
             try:
                 with watch("store_object"):
                     result = await conn.fetch(
@@ -949,12 +959,12 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
         if self._connection_manager._vacuum is not None:
             await self._connection_manager._vacuum.add_to_queue(oid, self.objects_table_name)
 
-    def acquire(self, txn):
-        return TransactionConnectionContextManager(self, txn)
+    def acquire(self, txn, op=""):
+        return TransactionConnectionContextManager(self, txn, op)
 
     async def delete(self, txn, oid):
         sql = self._sql.get("TRASH_PARENT_ID", self._objects_table_name)
-        async with self.acquire(txn) as conn:
+        async with self.acquire(txn, "delete_object") as conn:
             # for delete, we reassign the parent id and delete in the vacuum task
             with watch("delete_object"):
                 await conn.execute(sql, oid)
@@ -985,7 +995,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
 
     async def get_one_row(self, txn, sql, *args, prepare=False, metric="get_one_row"):
         # Helper function to provide easy adaptation to cockroach
-        async with self.acquire(txn) as conn:
+        async with self.acquire(txn, "get_one_row") as conn:
             with watch(metric):
                 return await conn.fetchrow(sql, *args)
 
