@@ -24,7 +24,10 @@ import asyncpg
 import asyncpg.connection
 import concurrent
 import orjson
+import logging
 import time
+
+logger = logging.getLogger(__name__)
 
 
 try:
