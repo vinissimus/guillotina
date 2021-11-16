@@ -1155,8 +1155,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
     async def get_annotation_keys(self, txn, oid):
         sql = self._sql.get("GET_ANNOTATIONS_KEYS", self._objects_table_name)
         async with self.acquire(txn, "load_annotation_keys") as conn:
-            with watch("load_annotation_keys"):
-                result = await conn.fetch(sql, oid)
+            result = await conn.fetch(sql, oid)
         items = []
         for item in result:
             if item["parent_id"] != TRASHED_ID:
