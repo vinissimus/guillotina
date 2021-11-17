@@ -76,7 +76,7 @@ class watch_lock(metrics.watch_lock):
         super().__init__(PG_LOCK_ACQUIRE_TIME, lock, labels={"type": operation})
 
 
-log = glogging.getLogger("guillotina.storage")
+# log = glogging.getLogger("guillotina.storage")
 
 
 # we can not use FOR UPDATE or FOR SHARE unfortunately because
@@ -411,7 +411,7 @@ class PGVacuum:
             except (concurrent.futures.CancelledError, RuntimeError):
                 raise
             except Exception:
-                log.warning(f"Error vacuuming oid {oid}", exc_info=True)
+                logger.warning(f"Error vacuuming oid {oid}", exc_info=True)
             finally:
                 self._active = False
                 try:
@@ -430,9 +430,9 @@ class PGVacuum:
                 for record in await conn.fetch(sql):
                     self._queue.put_nowait((record["zoid"], table_name))
             except concurrent.futures.TimeoutError:
-                log.info("Timed out connecting to storage")
+                logger.info("Timed out connecting to storage")
             except Exception:
-                log.warning("Error deleting trashed object", exc_info=True)
+                logger.warning("Error deleting trashed object", exc_info=True)
 
     async def add_to_queue(self, oid, table_name):
         if self._closed:
@@ -449,7 +449,7 @@ class PGVacuum:
                 with watch("vacuum_object"):
                     await conn.execute(sql, oid)
             except Exception:
-                log.warning("Error deleting trashed object", exc_info=True)
+                logger.warning("Error deleting trashed object", exc_info=True)
 
     async def finalize(self):
         self._closed = True
@@ -599,10 +599,10 @@ class TransactionConnectionContextManager:
 
     async def __aenter__(self):
         if self.txn.connection_reserved:
-            log.info(f"[{self.txn}] Before lock acquire ({self.op})")
+            logger.info(f"[{self.txn}] Before lock acquire ({self.op})")
             self._watch_lock = watch_lock(self.txn._lock, self.op)
             await self._watch_lock.__aenter__()
-            log.info(f"[{self.txn}] After lock acquire ({self.op})")
+            logger.info(f"[{self.txn}] After lock acquire ({self.op})")
             conn = self.txn._db_conn
         else:
             conn = self.connection = await self.storage.pool.acquire(timeout=self.storage._conn_acquire_timeout)
@@ -620,7 +620,7 @@ class TransactionConnectionContextManager:
         if self.txn.connection_reserved:
             await self._watch_lock.__aexit__(*exc)
             self._watch_lock = None
-            log.info(f"[{self.txn}] After lock release ({self.op})")
+            logger.info(f"[{self.txn}] After lock release ({self.op})")
         elif self.connection is not None:
             await self.storage.pool.release(self.connection)
 
@@ -755,7 +755,7 @@ class PostgresqlStorage(BaseStorage):
 
     async def _create(self, conn):
         # Check DB
-        log.info("Creating initial database objects")
+        logger.info("Creating initial database objects")
 
         statements = []
 
@@ -796,7 +796,7 @@ class PostgresqlStorage(BaseStorage):
                     pass
 
     async def restart_connection(self, timeout=0.1):
-        log.error("Connection potentially lost to pg, restarting")
+        logger.error("Connection potentially lost to pg, restarting")
         await self._connection_manager.restart()
         self._connection_initialized_on = time.time()
         raise ConflictError("Restarting connection to postgresql")
@@ -871,10 +871,10 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
             with watch("release_connection"):
                 await shield(self.pool.release(con, timeout=1))
         except (asyncio.CancelledError, asyncio.TimeoutError, asyncpg.exceptions.ConnectionDoesNotExistError):
-            log.warning("Exception on connection close", exc_info=True)
+            logger.warning("Exception on connection close", exc_info=True)
 
     async def terminate(self, conn):
-        log.warning(f"Terminate connection {conn}", exc_info=True)
+        logger.warning(f"Terminate connection {conn}", exc_info=True)
         conn.terminate()
 
     async def load(self, txn, oid):
@@ -890,7 +890,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
 
         pickled = writer.serialize()  # This calls __getstate__ of obj
         if len(pickled) >= self._large_record_size:
-            log.info(f"Large object {obj.__class__}: {len(pickled)}")
+            logger.info(f"Large object {obj.__class__}: {len(pickled)}")
         if self._store_json:
             json_dict = await writer.get_json()
             json = orjson.dumps(json_dict).decode("utf-8")
@@ -959,7 +959,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
                         writer,
                     )
                 else:
-                    log.error(
+                    logger.error(
                         "Incorrect response count from database update. "
                         "This should not happen. tid: {}".format(txn._tid)
                     )
@@ -1084,7 +1084,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
                 with watch("commit_txn"):
                     await transaction._db_txn.commit()
             elif not transaction._skip_commit:
-                log.warning("Do not have db transaction to commit")
+                logger.warning("Do not have db transaction to commit")
             return transaction._tid
 
     async def abort(self, transaction):
@@ -1098,7 +1098,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
                     pass
         # reads don't need transaction necessarily so don't log
         # else:
-        #     log.warning('Do not have db transaction to rollback')
+        #     logger.warning('Do not have db transaction to rollback')
 
     # Introspection
     async def get_page_of_keys(self, txn, oid, page=1, page_size=1000):
