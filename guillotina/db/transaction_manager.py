@@ -162,9 +162,9 @@ class TransactionManager:
                         pass
                     else:
                         raise
-
-            logger.info(f"[{txn}] Set db connection to None ({txn._db_conn})")
-            txn._db_conn = None
+            finally:
+                logger.info(f"[{txn}] Set db connection to None ({txn._db_conn})")
+                txn._db_conn = None
 
     async def abort(self, *, txn: typing.Optional[ITransaction] = None) -> None:
         try:
