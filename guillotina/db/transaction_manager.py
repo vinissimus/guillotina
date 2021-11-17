@@ -114,6 +114,7 @@ class TransactionManager:
         if txn is None:
             txn = self.get()
         if txn is not None:
+            logger.info(f"[{txn}] Commit ({txn._db_conn})")
             try:
                 await txn.commit()
             except (ConflictError, TIDConflictError):
@@ -178,6 +179,7 @@ class TransactionManager:
         if txn is None:
             txn = self.get()
         if txn is not None:
+            logger.info(f"[{txn}] Abort ({txn._db_conn})")
             try:
                 await txn.abort()
             finally:
