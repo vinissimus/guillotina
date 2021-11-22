@@ -4,6 +4,9 @@ CHANGELOG
 6.4.0rc3 (unreleased)
 ---------------------
 
+- Use custom implementation of ContextVar that is not copied automatically to new tasks
+  [masipcat]
+
 - Improve error logging in futures
   [masipcat]
 
