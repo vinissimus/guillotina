@@ -109,7 +109,7 @@ class TransactionManager:
         try:
             return await shield(copy_context(self._commit(txn=txn)))
         finally:
-            logger.info(f"[{txn}] After tm.commit() ({txn._db_conn})")
+            logger.info(f"[{txn}] After tm.commit()")
 
     async def _commit(self, *, txn: typing.Optional[ITransaction] = None) -> None:
         """ Commit the last transaction
@@ -177,7 +177,7 @@ class TransactionManager:
         except asyncio.CancelledError:
             pass
         finally:
-            logger.info(f"[{txn}] After tm.abort() ({txn._db_conn})")
+            logger.info(f"[{txn}] After tm.abort()")
 
     async def _abort(self, *, txn: typing.Optional[ITransaction] = None):
         """ Abort the last transaction
