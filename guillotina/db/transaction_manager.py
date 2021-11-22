@@ -80,7 +80,9 @@ class TransactionManager:
             # re-use txn if possible
             txn.initialize(read_only)
             if txn._db_conn is not None and getattr(txn._db_conn, "_in_use", None) is None:
-                logger.info(f"[{txn}] Closing conn: {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})")
+                logger.info(
+                    f"[{txn}] Closing conn: {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})"
+                )
                 try:
                     await self._close_txn(txn)
                 except Exception:
