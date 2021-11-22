@@ -5,6 +5,7 @@ from guillotina.exceptions import TransactionNotFound
 from guillotina.interfaces import IAsyncJobPool
 from guillotina.interfaces import IQueueUtility
 from guillotina.profile import profilable
+from guillotina.task_vars import copy_context
 from guillotina.task_vars import txn
 from guillotina.transactions import get_transaction
 from guillotina.utils import notice_on_error_internal
@@ -208,7 +209,7 @@ def execute_futures(scope: str = "", futures=None, task=None) -> Optional[asynci
             fut = fut_data["fut"]
             if not asyncio.iscoroutine(fut):
                 fut = fut(*fut_data.get("args") or [], **fut_data.get("kwargs") or {})
-            found.append(fut)
+            found.append(copy_context(fut))
 
         futures[scope] = {}
         task = None
