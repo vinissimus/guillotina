@@ -133,16 +133,27 @@ class TransactionManager:
 
     async def _close_txn(self, txn: typing.Optional[ITransaction]):
         logger.info(f"[{txn}] [{asyncio.current_task()}] Close txn's connection {txn._db_conn}")
-        if txn is not None and txn._db_conn is not None:
-            try:
-                txn._query_count_end = txn.get_query_count()
-            except AttributeError:
-                pass
+        conn = None
+        if txn is not None:
+            # Since we are about to release the connection to the pool, we need to ensure
+            # that there isn't any other task using the same connection during the process.
+            # Otherwise, this would produce the exception "InterfaceError: cannot perform operation: another operation is in progress"
+            async with txn.lock:
+                try:
+                    txn._query_count_end = txn.get_query_count()
+                except AttributeError:
+                    pass
+
+                conn = txn._db_conn
+                logger.info(f"[{txn}] [{asyncio.current_task()}] Set db connection to None ({conn})")
+                txn._db_conn = None
+
+        if conn is not None:
             try:
                 try:
-                    logger.info(f"[{txn}] [{asyncio.current_task()}] Storage close connection {txn._db_conn}")
-                    await self._storage.close(txn._db_conn)
-                    logger.info(f"[{txn}] [{asyncio.current_task()}] After storage close connection {txn._db_conn}")
+                    logger.info(f"[{txn}] [{asyncio.current_task()}] Storage close connection {conn}")
+                    await self._storage.close(conn)
+                    logger.info(f"[{txn}] [{asyncio.current_task()}] After storage close connection {conn}")
                 except asyncpg.exceptions.InterfaceError as ex:
                     if "received invalid connection" in str(ex):
                         # ignore, new pool was created so we can not close this conn
@@ -151,27 +162,22 @@ class TransactionManager:
                         raise
                 except asyncpg.exceptions.InternalClientError:
                     # edge-case where connection is already released
-                    if txn._db_conn is not None:
+                    if conn is not None:
                         raise
             except Exception:
-                logger.exception(f"[{txn}] [{asyncio.current_task()}] Exception: {txn._db_conn}, {getattr(txn._db_conn, '_con', None)}")
+                logger.exception(f"[{txn}] [{asyncio.current_task()}] Exception: {conn}, {getattr(conn, '_con', None)}")
                 # failsafe terminate to make sure connection is cleaned
-                if txn._db_conn is None:
-                    raise
-                if txn._db_conn._con is None:
+                if conn._con is None:
                     raise
 
                 try:
-                    await self._storage.terminate(txn._db_conn)
+                    await self._storage.terminate(conn)
                 except asyncpg.exceptions.InterfaceError as ex:
-                    logger.exception(f"[{txn}] [{asyncio.current_task()}] InterfaceError: {txn._db_conn}")
+                    logger.exception(f"[{txn}] [{asyncio.current_task()}] InterfaceError: {conn}")
                     if "released back to the pool" in str(ex):
                         pass
                     else:
                         raise
-            finally:
-                logger.info(f"[{txn}] [{asyncio.current_task()}] Set db connection to None ({txn._db_conn})")
-                txn._db_conn = None
 
     async def abort(self, *, txn: typing.Optional[ITransaction] = None) -> None:
         try:
