@@ -106,7 +106,10 @@ class TransactionManager:
         return txn
 
     async def commit(self, *, txn: typing.Optional[ITransaction] = None) -> None:
-        return await shield(copy_context(self._commit(txn=txn)))
+        try:
+            return await shield(copy_context(self._commit(txn=txn)))
+        finally:
+            logger.info(f"[{txn}] After tm.commit() ({txn._db_conn})")
 
     async def _commit(self, *, txn: typing.Optional[ITransaction] = None) -> None:
         """ Commit the last transaction
@@ -137,6 +140,7 @@ class TransactionManager:
                 try:
                     logger.info(f"[{txn}] Storage close connection {txn._db_conn}")
                     await self._storage.close(txn._db_conn)
+                    logger.info(f"[{txn}] After storage close connection {txn._db_conn}")
                 except asyncpg.exceptions.InterfaceError as ex:
                     if "received invalid connection" in str(ex):
                         # ignore, new pool was created so we can not close this conn
@@ -172,6 +176,8 @@ class TransactionManager:
             return await shield(copy_context(self._abort(txn=txn)))
         except asyncio.CancelledError:
             pass
+        finally:
+            logger.info(f"[{txn}] After tm.abort() ({txn._db_conn})")
 
     async def _abort(self, *, txn: typing.Optional[ITransaction] = None):
         """ Abort the last transaction
