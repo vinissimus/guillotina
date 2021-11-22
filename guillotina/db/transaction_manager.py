@@ -76,20 +76,20 @@ class TransactionManager:
             and txn.storage == self.storage
             and txn.status in (Status.ABORTED, Status.COMMITTED, Status.CONFLICT)
         ):
-            logger.info(f"[{txn}] Reusing txn")
+            logger.info(f"[{txn}] [{asyncio.current_task()}] Reusing txn")
             # re-use txn if possible
             txn.initialize(read_only)
             if txn._db_conn is not None and getattr(txn._db_conn, "_in_use", None) is None:
                 logger.info(
-                    f"[{txn}] Closing conn: {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})"
+                    f"[{txn}] [{asyncio.current_task()}] Closing conn: {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})"
                 )
                 try:
                     await self._close_txn(txn)
                 except Exception:
-                    logger.warn(f"[{txn}] Unable to close spurious connection", exc_info=True)
+                    logger.warn(f"[{txn}] [{asyncio.current_task()}] Unable to close spurious connection", exc_info=True)
         else:
             txn = Transaction(self, read_only=read_only)
-            logger.info(f"[{txn}] Initializing new txn")
+            logger.info(f"[{txn}] [{asyncio.current_task()}] Initializing new txn")
 
         try:
             txn.user = get_authenticated_user_id()
@@ -111,7 +111,7 @@ class TransactionManager:
         try:
             return await shield(copy_context(self._commit(txn=txn)))
         finally:
-            logger.info(f"[{txn}] After tm.commit()")
+            logger.info(f"[{txn}] [{asyncio.current_task()}] After tm.commit()")
 
     async def _commit(self, *, txn: typing.Optional[ITransaction] = None) -> None:
         """ Commit the last transaction
@@ -119,7 +119,7 @@ class TransactionManager:
         if txn is None:
             txn = self.get()
         if txn is not None:
-            logger.info(f"[{txn}] Commit ({txn._db_conn})")
+            logger.info(f"[{txn}] [{asyncio.current_task()}] Commit ({txn._db_conn})")
             try:
                 await txn.commit()
             except (ConflictError, TIDConflictError):
@@ -132,7 +132,7 @@ class TransactionManager:
             await self._close_txn(txn)
 
     async def _close_txn(self, txn: typing.Optional[ITransaction]):
-        logger.info(f"[{txn}] Close txn's connection {txn._db_conn}")
+        logger.info(f"[{txn}] [{asyncio.current_task()}] Close txn's connection {txn._db_conn}")
         if txn is not None and txn._db_conn is not None:
             try:
                 txn._query_count_end = txn.get_query_count()
@@ -140,9 +140,9 @@ class TransactionManager:
                 pass
             try:
                 try:
-                    logger.info(f"[{txn}] Storage close connection {txn._db_conn}")
+                    logger.info(f"[{txn}] [{asyncio.current_task()}] Storage close connection {txn._db_conn}")
                     await self._storage.close(txn._db_conn)
-                    logger.info(f"[{txn}] After storage close connection {txn._db_conn}")
+                    logger.info(f"[{txn}] [{asyncio.current_task()}] After storage close connection {txn._db_conn}")
                 except asyncpg.exceptions.InterfaceError as ex:
                     if "received invalid connection" in str(ex):
                         # ignore, new pool was created so we can not close this conn
@@ -154,7 +154,7 @@ class TransactionManager:
                     if txn._db_conn is not None:
                         raise
             except Exception:
-                logger.exception(f"[{txn}] Exception: {txn._db_conn}, {getattr(txn._db_conn, '_con', None)}")
+                logger.exception(f"[{txn}] [{asyncio.current_task()}] Exception: {txn._db_conn}, {getattr(txn._db_conn, '_con', None)}")
                 # failsafe terminate to make sure connection is cleaned
                 if txn._db_conn is None:
                     raise
@@ -164,13 +164,13 @@ class TransactionManager:
                 try:
                     await self._storage.terminate(txn._db_conn)
                 except asyncpg.exceptions.InterfaceError as ex:
-                    logger.exception(f"[{txn}] InterfaceError: {txn._db_conn}")
+                    logger.exception(f"[{txn}] [{asyncio.current_task()}] InterfaceError: {txn._db_conn}")
                     if "released back to the pool" in str(ex):
                         pass
                     else:
                         raise
             finally:
-                logger.info(f"[{txn}] Set db connection to None ({txn._db_conn})")
+                logger.info(f"[{txn}] [{asyncio.current_task()}] Set db connection to None ({txn._db_conn})")
                 txn._db_conn = None
 
     async def abort(self, *, txn: typing.Optional[ITransaction] = None) -> None:
@@ -179,7 +179,7 @@ class TransactionManager:
         except asyncio.CancelledError:
             pass
         finally:
-            logger.info(f"[{txn}] After tm.abort()")
+            logger.info(f"[{txn}] [{asyncio.current_task()}] After tm.abort()")
 
     async def _abort(self, *, txn: typing.Optional[ITransaction] = None):
         """ Abort the last transaction
@@ -187,7 +187,7 @@ class TransactionManager:
         if txn is None:
             txn = self.get()
         if txn is not None:
-            logger.info(f"[{txn}] Abort ({txn._db_conn})")
+            logger.info(f"[{txn}] [{asyncio.current_task()}] Abort ({txn._db_conn})")
             try:
                 await txn.abort()
             finally:

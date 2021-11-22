@@ -600,13 +600,13 @@ async def TransactionConnectionContextManager(storage, txn, op):
     watch_db = watch(op) if op else noop_watch()
 
     if txn.connection_reserved:
-        logger.info(f"[{txn}] Before lock acquire ({op})")
+        logger.info(f"[{txn}] [{asyncio.current_task()}] Before lock acquire ({op})")
         async with watch_lock(txn._lock, op):
-            logger.info(f"[{txn}] After lock acquire ({op})")
+            logger.info(f"[{txn}] [{asyncio.current_task()}] After lock acquire ({op})")
             with watch_db:
                 yield txn._db_conn
 
-        logger.info(f"[{txn}] After lock release ({op})")
+        logger.info(f"[{txn}] [{asyncio.current_task()}] After lock release ({op})")
 
     else:
         try:
@@ -1012,7 +1012,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
     async def start_transaction(self, txn, retries=0):
         error = None
         conn = await txn.get_connection()
-        logger.info(f"[{txn}] Start transaction: {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})")
+        logger.info(f"[{txn}] [{asyncio.current_task()}] Start transaction: {txn._db_conn} ({getattr(txn._db_conn, '_in_use', None)})")
         async with watch_lock(txn._lock, "start_txn"):
             txn._db_txn = await self._async_db_transaction_factory(txn)
 
@@ -1021,7 +1021,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
                     await txn._db_txn.start()
                 return
             except (asyncpg.exceptions.InterfaceError, asyncpg.exceptions.InternalServerError) as ex:
-                logger.info(f"[{txn}] Error start transaction: {ex}")
+                logger.info(f"[{txn}] [{asyncio.current_task()}] Error start transaction: {ex}")
                 error = ex
 
         if error is not None:
@@ -1039,7 +1039,7 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
                     rollback = True
 
             if rollback:
-                logger.info(f"[{txn}] Rollback")
+                logger.info(f"[{txn}] [{asyncio.current_task()}] Rollback")
                 try:
                     # thinks we're manually in txn, manually rollback and try again...
                     await conn.execute("ROLLBACK;")
@@ -1047,10 +1047,10 @@ WHERE tablename = '{}' AND indexname = '{}_parent_id_id_key';
                     # we're okay with this error here...
                     pass
             if restart:
-                logger.info(f"[{txn}] Restart")
+                logger.info(f"[{txn}] [{asyncio.current_task()}] Restart")
                 await self.close(conn)
                 txn._db_conn = await self.open()
-                logger.info(f"[{txn}] Open new connection {txn._db_conn}")
+                logger.info(f"[{txn}] [{asyncio.current_task()}] Open new connection {txn._db_conn}")
                 return await self.start_transaction(txn, retries + 1)
 
     async def get_conflicts(self, txn):
