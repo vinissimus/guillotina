@@ -1,4 +1,5 @@
 from guillotina import app_settings
+from guillotina.utils.misc import notice_on_error2
 from guillotina import configure
 from guillotina.component import query_utility
 from guillotina.db.cache.base import BaseCache
