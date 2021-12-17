@@ -176,9 +176,14 @@ class ASCIILine(ASCII):
 class Float(Orderable, Field):
     __doc__ = IFloat.__doc__
     _type = float
+    __missing_value_marker = Field._Field__missing_value_marker
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, missing_value=__missing_value_marker, **kw):
         super(Float, self).__init__(*args, **kw)
+        # Workaround to avoid validation of Orderable.min & Orderable.max value
+        # with missing_value type
+        if missing_value is not self.__missing_value_marker:
+            self.missing_value = missing_value
 
     def from_unicode(self, uc):
         """See IFromUnicode."""
