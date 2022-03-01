@@ -199,27 +199,28 @@ def execute_futures(scope: str = "", futures=None, task=None) -> Optional[asynci
         futures = task_vars.futures.get() or {}
     if scope not in futures:
         return None
-    found = []
 
     # Force each future to create a new txn to avoid multiple futures to use
     # the same txn and generate conflicts
     token = txn.set(None)
     try:
+        found = []
         for fut_data in futures[scope].values():
             fut = fut_data["fut"]
             if not asyncio.iscoroutine(fut):
                 fut = fut(*fut_data.get("args") or [], **fut_data.get("kwargs") or {})
             found.append(copy_context(fut))
+
+        futures[scope] = {}
+        task = None
+        if len(found) > 0:
+            task = asyncio.ensure_future(
+                notice_on_error_internal("Error during after_request futures", asyncio.gather(*found))
+            )
     finally:
         # Restore the original value
         txn.reset(token)
-    futures[scope] = {}
-    if len(found) > 0:
-        task = asyncio.ensure_future(
-            notice_on_error_internal("Error during after_request futures", asyncio.gather(*found))
-        )
-        return task
-    return None
+    return task
 
 
 def clear_futures():

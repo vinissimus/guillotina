@@ -43,7 +43,12 @@ def reindex_in_future(context, security=False):
     """
     search = query_utility(ICatalogUtility)
     if search is not None:
-        execute.in_pool(search.reindex_all_content, context, security).after_request()
+        execute.in_pool(_reindex_all_content, search, context, security).after_request()
+
+
+async def _reindex_all_content(search, context, security):
+    async with transaction(read_only=True):
+        await search.reindex_all_content(context, security)
 
 
 _cached_indexes: typing.Dict[str, typing.Dict] = {}
