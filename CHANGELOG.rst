@@ -3,6 +3,8 @@ CHANGELOG
 
 6.4.1 (unreleased)
 ------------------
+- Deps: replace aioredis with redis-py
+  [masipcat]
 
 - Content: fix async_get() is catching KeyError exceptions unrelated to txn.get_child()
   [masipcat]
