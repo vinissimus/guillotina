@@ -36,6 +36,7 @@ async def install(context, request):
         )
 
     registry = await get_registry()
+    # breakpoint()
     config = registry.for_interface(IAddons)
 
     if id_to_install in config["enabled"]:

@@ -385,7 +385,7 @@ def clear_task_vars():
 
 @pytest.fixture(scope="function")
 async def dummy_guillotina(event_loop, request):
-    globalregistry.reset()
+    # globalregistry.reset()
     task_vars._no_task_fallback = task_vars.FakeTask()
     app = make_app(settings=get_dummy_settings(request.node), loop=event_loop)
     async with TestClient(app):
@@ -521,10 +521,10 @@ async def app(event_loop, db, request):
 
 @pytest.fixture(scope="function")
 async def app_client(event_loop, db, request):
-    globalregistry.reset()
+    # globalregistry.reset()
     task_vars._no_task_fallback = task_vars.FakeTask()
     app = make_app(settings=get_db_settings(request.node), loop=event_loop)
-    async with TestClient(app, timeout=30) as client:
+    async with TestClient(app) as client:
         await _clear_dbs(app.app.root)
         yield app, client
     clear_task_vars()

@@ -109,9 +109,11 @@ class SaltedHashPasswordValidator:
         user_pw = getattr(user, "password", None)
         if not user_pw or ":" not in user_pw or "token" not in token:
             return
-        executor = self.get_executor()
-        loop = asyncio.get_event_loop()
-        if await loop.run_in_executor(executor, partial(check_password, user_pw, token["token"])):
+        # executor = self.get_executor()
+        # loop = asyncio.get_event_loop()
+        # if await loop.run_in_executor(executor, partial(check_password, user_pw, token["token"])):
+        #     return user
+        if await asyncio.to_thread(partial(check_password, user_pw, token["token"])):
             return user
 
 

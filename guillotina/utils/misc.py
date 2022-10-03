@@ -388,10 +388,11 @@ async def get_registry(context=None) -> typing.Optional[IRegistry]:
         if container is None and context is not None:
             container = find_container(context)
         if container is None:
+            # breakpoint()
             return None
         annotations_container = IAnnotations(container)
         from guillotina.registry import REGISTRY_DATA_KEY
-
+        # breakpoint()
         registry = await annotations_container.async_get(REGISTRY_DATA_KEY)
         task_vars.registry.set(registry)
     return registry

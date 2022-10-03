@@ -101,7 +101,7 @@ class ContainerRequesterAsyncContextManager:
                 }
             ),
         )
-        assert status == 200
+        assert status == 200, (resp, status)
         for addon in self.install:
             await self.requester("POST", "/db/guillotina/@addons", data=json.dumps({"id": addon}))
         return self.requester

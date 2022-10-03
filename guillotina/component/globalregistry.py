@@ -139,29 +139,78 @@ class GlobalComponents(Components):  # type: ignore
         return self.__name__
 
 
-base = GlobalComponents("base")
+
+# from contextvars import ContextVar
+
+_base = { } # ContextVar("base")
+
+
+
+# base = GlobalComponents("base")
+
+from contextvars import ContextVar
+
+app_instance_id = ContextVar("app_instance_id")
+
+import inspect
+
+def get_request():
+    from guillotina.request import Request
+
+    frame = inspect.currentframe()
+    while frame is not None:
+        request = getattr(frame.f_locals.get('self'), 'request', None)
+        if request is not None:
+            return request
+        elif isinstance(frame.f_locals.get('request'), Request):
+            return frame.f_locals['request']
+        frame = frame.f_back
+
+# from guillotina.utils import get_current_request
+    # get_current_request
+
+
 
 
 def get_global_components():
-    return base
+    import asyncio
+
+
+    try:
+        id_ = app_instance_id.get()
+    except LookupError:
+        raise
+        request = get_request()
+        # breakpoint()
+        id_ = id(request.application)
+
+    if id_ not in _base:
+        _base[id_] = GlobalComponents("base")
+    return _base[id_]
+
+    # except LookupError:
+    #     _base.set(GlobalComponents("base"))
+    #     return _base.get()
+    # # return base
 
 
 def reset():
-    global base
-    base = GlobalComponents("base")
+    id_ = app_instance_id.get()
+    _base[id_] = GlobalComponents("base")
+    # base = GlobalComponents("base")
 
 
 def provide_utility(component, provides=None, name=_BLANK):
-    base.registerUtility(component, provides, name, event=False)
+    get_global_components().registerUtility(component, provides, name, event=False)
 
 
 def provide_adapter(factory, adapts=None, provides=None, name=_BLANK):
-    base.registerAdapter(factory, adapts, provides, name, event=False)
+    get_global_components().registerAdapter(factory, adapts, provides, name, event=False)
 
 
 def provide_subscription_adapter(factory, adapts=None, provides=None):
-    base.registerSubscriptionAdapter(factory, adapts, provides, event=False)
+    get_global_components().registerSubscriptionAdapter(factory, adapts, provides, event=False)
 
 
 def provide_handler(factory, adapts=None):
-    base.registerHandler(factory, adapts, event=False)
+    get_global_components().registerHandler(factory, adapts, event=False)

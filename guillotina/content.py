@@ -324,11 +324,12 @@ class Folder(Resource):
 
         :param key: key of child object to get
         """
+        val = None
         try:
             txn = self._get_transaction()
             val = await txn.get_child(self, key)
         except KeyError as e:
-            val = None
+            pass
         if val is not None:
             if not suppress_events:
                 await notify(ObjectLoadedEvent(val))

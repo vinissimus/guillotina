@@ -77,7 +77,7 @@ class FieldProperty(object):
             raise ValueError(self.__name, "field is readonly")
         oldvalue = self.queryValue(inst, NO_VALUE)
         inst.__dict__[self.__name] = value
-        event.sync_notify(FieldUpdatedEvent(inst, field, oldvalue, value))
+        # event.sync_notify(FieldUpdatedEvent(inst, field, oldvalue, value))
 
     def __getattr__(self, name):
         return getattr(self.__field, name)

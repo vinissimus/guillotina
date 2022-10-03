@@ -149,6 +149,7 @@ class ShyContextVar(Generic[_T]):
         return data
 
 
+
 request: ShyContextVar[Optional[IRequest]] = ShyContextVar("g_request", default=None)
 txn: ShyContextVar[Optional[ITransaction]] = ShyContextVar("g_txn", default=None)
 tm: ShyContextVar[Optional[ITransactionManager]] = ShyContextVar("g_tm", default=None)

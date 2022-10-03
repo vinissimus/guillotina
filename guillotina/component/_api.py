@@ -35,7 +35,7 @@ _MISSING = object()
 def get_component_registry(context=None):
     """See IComponentArchitecture."""
     if context is None:
-        return globalregistry.base
+        return globalregistry.get_global_components()
     else:
         # Use the global site manager to adapt context to `IComponentLookup`
         # to avoid the recursion implied by using a local `get_adapter()` call.

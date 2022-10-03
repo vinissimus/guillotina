@@ -2,13 +2,19 @@ from guillotina import interfaces
 from guillotina.db.uid import generate_uid
 from typing import Any
 from typing import Dict
+from contextvars import ContextVar
 
 import copy
 import pickle
 import string
 
+settings = ContextVar("settings")
 
-app_settings: Dict[str, Any] = {
+
+
+
+
+_app_settings: Dict[str, Any] = {
     "debug": False,
     "databases": [],
     "storages": {},
@@ -105,4 +111,53 @@ app_settings: Dict[str, Any] = {
         "guillotina.Manager": 1,
     },
 }
-default_settings = copy.deepcopy(app_settings)
+
+
+class SettingsProxy():
+    def __init__(self, default):
+        self._default = default
+
+    @property
+    def _d(self):
+        try:
+            return settings.get()
+        except LookupError:
+            settings.set(copy.deepcopy(self._default))
+            return settings.get()
+
+    def __getitem__(self, key):
+        return self._d[key]
+
+    def __setitem__(self, key, value):
+        self._d[key] = value
+
+    def __delitem__(self, key):
+        del self._d[key]
+
+    def pop(self, *args, **kwargs):
+        return self._d.pop(*args, **kwargs)
+
+    def __contains__(self, value):
+        return value in self._d
+
+    def get(self, *args, **kwargs):
+        return self._d.get(*args, **kwargs)
+
+    def keys(self):
+        return self._d.keys()
+
+    def items(self):
+        return self._d.items()
+
+    def values(self):
+        return self._d.values()
+
+    def clear(self):
+        self._d.clear()
+
+    def update(self, *args, **kwargs):
+        self._d.update(*args, **kwargs)
+
+
+app_settings = SettingsProxy(_app_settings)
+default_settings = copy.deepcopy(_app_settings)

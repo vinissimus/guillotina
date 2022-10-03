@@ -167,8 +167,14 @@ def optimize_settings(settings):
 def make_app(config_file=None, settings=None, loop=None):
     from guillotina.asgi import AsgiApp
 
+    # breakpoint()
+
     router_klass = app_settings.get("router", traversal.TraversalRouter)
     app = AsgiApp(config_file, settings, loop, resolve_dotted_name(router_klass)())
+
+    from guillotina.component.globalregistry import app_instance_id
+
+    app_instance_id.set(id(app))
 
     return app
 
@@ -315,6 +321,8 @@ async def startup_app(config_file=None, settings=None, loop=None, server_app=Non
     # Set router root
     server_app.router.set_root(root)
     server_app.on_cleanup.append(cleanup_app)
+
+    # breakpoint()
 
     for key, util in app_settings["load_utilities"].items():
         app_logger.info("Adding " + key + " : " + util["provides"])
