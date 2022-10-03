@@ -3,6 +3,7 @@ CHANGELOG
 
 6.4.3 (unreleased)
 ------------------
+
 - Deps: replace aioredis with redis-py
   [masipcat]
 
