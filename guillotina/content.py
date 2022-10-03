@@ -327,7 +327,7 @@ class Folder(Resource):
         try:
             txn = self._get_transaction()
             val = await txn.get_child(self, key)
-        except KeyError as e:
+        except KeyError:
             val = None
         if val is not None:
             if not suppress_events:

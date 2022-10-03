@@ -1,13 +1,25 @@
 CHANGELOG
 =========
 
-6.4.1 (unreleased)
+6.4.3 (unreleased)
 ------------------
 - Deps: replace aioredis with redis-py
   [masipcat]
 
-- Content: fix async_get() is catching KeyError exceptions unrelated to txn.get_child()
-  [masipcat]
+
+6.4.2 (2022-08-25)
+------------------
+
+- Being able to call do_action with super powers in the Workflow
+  utility
+  [nilbacardit26]
+
+
+6.4.1 (2022-07-27)
+------------------
+
+- Fix build count query, PG catalog, ignore null and format tuple type. 
+  [rboixaderg]
 
 
 6.4.0 (2022-04-12)
