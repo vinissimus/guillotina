@@ -8,6 +8,8 @@ CHANGELOG
 - Deps: replace aioredis with redis-py
 - Deps: updated flake8 so it won't depend on 'importlib-metadata<5'
   [masipcat]
+- Fix not checking if the ID is valid when duplicating a resource
+  [masipcat]
 
 
 6.4.2 (2022-08-25)
